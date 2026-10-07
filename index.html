@@ -1,1 +1,298 @@
-index.html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auditorias Cacau Show</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f5f5f5;
+}
+
+header{
+    background:#5b1f13;
+    color:#fff;
+    padding:15px;
+}
+
+h1{
+    margin:0;
+}
+
+.resumo{
+    display:flex;
+    gap:10px;
+    padding:10px;
+    flex-wrap:wrap;
+}
+
+.box{
+    background:#fff;
+    border-radius:10px;
+    padding:10px;
+    min-width:120px;
+}
+
+.pesquisa{
+    padding:10px;
+}
+
+.pesquisa input{
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #ccc;
+}
+
+.loja{
+    background:#fff;
+    margin:10px;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:0 1px 5px rgba(0,0,0,.1);
+}
+
+.loja h3{
+    margin:0 0 10px 0;
+}
+
+label{
+    display:block;
+    margin-top:10px;
+    font-weight:bold;
+}
+
+input[type=text],
+input[type=date],
+select,
+textarea{
+    width:100%;
+    padding:8px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    box-sizing:border-box;
+}
+
+textarea{
+    min-height:80px;
+}
+
+button{
+    background:#5b1f13;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    padding:10px;
+    margin-top:10px;
+    cursor:pointer;
+}
+
+.status{
+    color:green;
+    font-weight:bold;
+    margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>📋 Auditorias Cacau Show</h1>
+</header>
+
+<div class="resumo">
+    <div class="box">
+        <b>Total</b>
+        <div id="total"></div>
+    </div>
+
+    <div class="box">
+        <b>Auditadas</b>
+        <div id="auditadas"></div>
+    </div>
+
+    <div class="box">
+        <b>Pendentes</b>
+        <div id="pendentes"></div>
+    </div>
+</div>
+
+<div class="pesquisa">
+<input type="text" id="buscar" placeholder="Pesquisar loja, código ou bairro">
+</div>
+
+<div id="lista"></div>
+
+<script>
+
+const LOJAS = [
+
+{
+codigo:"9843",
+nome:"SP SAO PAULO SUPER POUPAKI VILA RUBI",
+email:"super.sppoupakiparquealtoriobonito@lp.cacaushow.com.br",
+bairro:"VL RUBI",
+endereco:"RUA DOMINGOS TARROSO, 3"
+},
+
+{
+codigo:"721",
+nome:"SP SAO PAULO SH INTERLAGOS",
+email:"spshinterlagos@lp.cacaushow.com.br",
+bairro:"JARDIM UMUARAMA",
+endereco:"AV INTERLAGOS, 2255"
+},
+
+{
+codigo:"4648",
+nome:"SP SAO PAULO SH VILLA LOBOS",
+email:"supershvillalobos@lp.cacaushow.com.br",
+bairro:"JD UNIVERSIDADE PINHEIROS",
+endereco:"AV DRA RUTH CARDOSO, 4777"
+},
+
+{
+codigo:"5887",
+nome:"SP SAO PAULO SH PATIO PAULISTA",
+email:"spshpatiopaulista@lp.cacaushow.com.br",
+bairro:"BELA VISTA",
+endereco:"R TREZE DE MAIO, 1933"
+},
+
+{
+codigo:"5329",
+nome:"SP SAO PAULO SOCORRO",
+email:"spsocorro@lp.cacaushow.com.br",
+bairro:"SOCORRO",
+endereco:"AV DE PINEDO, 125"
+}
+
+];
+
+const STORAGE="auditorias";
+
+function dados(){
+return JSON.parse(localStorage.getItem(STORAGE)||"{}");
+}
+
+function salvarDados(obj){
+localStorage.setItem(STORAGE,JSON.stringify(obj));
+}
+
+function atualizarPainel(){
+
+let d=dados();
+
+let auditadas=Object.keys(d).length;
+
+document.getElementById("total").innerText=LOJAS.length;
+document.getElementById("auditadas").innerText=auditadas;
+document.getElementById("pendentes").innerText=LOJAS.length-auditadas;
+
+}
+
+function salvarAuditoria(codigo){
+
+let d=dados();
+
+d[codigo]={
+data:document.getElementById("data_"+codigo).value,
+acompanhante:document.getElementById("acomp_"+codigo).value,
+resultado:document.getElementById("resultado_"+codigo).value,
+observacao:document.getElementById("obs_"+codigo).value,
+pdf:document.getElementById("pdf_"+codigo).value
+};
+
+salvarDados(d);
+
+document.getElementById("msg_"+codigo).innerHTML="✅ Auditoria salva";
+
+atualizarPainel();
+
+}
+
+function renderizar(filtro=""){
+
+let lista=document.getElementById("lista");
+lista.innerHTML="";
+
+let d=dados();
+
+LOJAS
+.filter(l=>(
+(l.codigo+l.nome+l.bairro+l.email).toLowerCase()
+.includes(filtro.toLowerCase())
+))
+.forEach(loja=>{
+
+let audit=d[loja.codigo]||{};
+
+lista.innerHTML+=`
+
+<div class="loja">
+
+<h3>${loja.codigo} - ${loja.nome}</h3>
+
+<div><b>Email:</b> ${loja.email}</div>
+<div><b>Bairro:</b> ${loja.bairro}</div>
+<div><b>Endereço:</b> ${loja.endereco}</div>
+
+<label>Data da Visita</label>
+<input type="date"
+id="data_${loja.codigo}"
+value="${audit.data||''}">
+
+<label>Acompanhante</label>
+<input type="text"
+id="acomp_${loja.codigo}"
+value="${audit.acompanhante||''}">
+
+<label>Resultado</label>
+<select id="resultado_${loja.codigo}">
+<option value="">Selecione</option>
+<option ${audit.resultado=="Conforme"?"selected":""}>Conforme</option>
+<option ${audit.resultado=="Não Conforme"?"selected":""}>Não Conforme</option>
+</select>
+
+<label>Observações</label>
+<textarea
+id="obs_${loja.codigo}">${audit.observacao||''}</textarea>
+
+<label>Link PDF</label>
+<input type="text"
+id="pdf_${loja.codigo}"
+value="${audit.pdf||''}">
+
+<button onclick="salvarAuditoria('${loja.codigo}')">
+Salvar Auditoria
+</button>
+
+${audit.pdf ? `<br><br><a target="_blank" href="${audit.pdf}">📄 Abrir Auditoria</a>` : ''}
+
+<div class="status" id="msg_${loja.codigo}"></div>
+
+</div>
+
+`;
+
+});
+
+atualizarPainel();
+
+}
+
+document.getElementById("buscar")
+.addEventListener("input",e=>{
+renderizar(e.target.value);
+});
+
+renderizar();
+
+</script>
+
+</body>
+</html>
